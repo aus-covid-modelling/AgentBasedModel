@@ -45,6 +45,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     
     // Disease model initialisation.
     std::vector<double> b{0.0};std::vector<double> w{1.0};
+    
     disease_model covid(beta, beta_C, contact_matrix,b,w); // Load the disease model, asymptomatic infections and severity are associated with each individual.
     
     //  Parameters for households.
@@ -59,7 +60,6 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     community city(0,num_houses,average_house_size,residents,houses,age_brackets,population_pi,no_vaccine); // Vaccinated proportion not used here now.
     std::cout << "residents = " << residents.size() << " houses = " << houses.size() << "\n";
 
-    
     // Dosage counters.
     int count_first_doses = 0; // Individuals who have recieved first dose. (Should this be age stratified).
     int count_second_doses = 0; // Number of individuals who have recieved second dose. (Should this be age stratified).
@@ -268,6 +268,7 @@ int main(int argc, char *argv[]){
     std::string line;
     std::string var_name;
     std::string tp_filename;
+    std::string scenario_ref;
     // Create folder
     std::string folder;
 
@@ -293,6 +294,8 @@ int main(int argc, char *argv[]){
             parameters_in >> parameters.average_house_size;
         }else if(var_name.compare("TransmissionPotential")==0){
             parameters_in >> tp_filename;
+        }else if(var_name.compare("VaccineScenario")==0){
+            parameters_in >> scenario_ref;
         }
     }
     parameters_in.close(); // Close the file.
@@ -319,7 +322,6 @@ int main(int argc, char *argv[]){
     std::vector<size_t> TP_ref(TP.size(),0);
     std::iota(TP_ref.begin(),TP_ref.end(),0);
     std::shuffle(TP_ref.begin(),TP_ref.end(),std::mt19937{std::random_device{}()}); // Randomly shuffle the vector. We will be sample from the first num_sims.
-    // Erase values if needed here.
     
     // Create folder.
     std::string directory = "./outputs/" + folder;
@@ -358,7 +360,7 @@ int main(int argc, char *argv[]){
     }
     
     std::vector<std::vector<double>> pfizer_doses_per_week;
-    std::ifstream pfizer_schedule("./vaccination_input/pfizer_scenario_1.csv");
+    std::ifstream pfizer_schedule("./vaccination_input/pfizer_" + scenario_ref + ".csv");
 
     if(pfizer_schedule.is_open()){
         std::string line;
@@ -380,7 +382,7 @@ int main(int argc, char *argv[]){
     }
     
     std::vector<std::vector<double>> AZ_doses_per_week;
-    std::ifstream AZ_schedule("./vaccination_input/AZ_scenario_1.csv");
+    std::ifstream AZ_schedule("./vaccination_input/AZ_" + scenario_ref + ".csv");
 
     if(AZ_schedule.is_open()){
         std::string line;
@@ -402,7 +404,7 @@ int main(int argc, char *argv[]){
     }
     
     std::vector<std::vector<double>> moderna_doses_per_week;
-    std::ifstream M_schedule("./vaccination_input/Moderna_scenario_1.csv");
+    std::ifstream M_schedule("./vaccination_input/Moderna_" + scenario_ref + ".csv");
 
     if(M_schedule.is_open()){
         std::string line;
