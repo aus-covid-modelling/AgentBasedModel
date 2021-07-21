@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <chrono>
-
+#include <algorithm>
 
 
 // Define the information required for the contact ibm.
