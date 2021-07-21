@@ -90,68 +90,70 @@ bool disease_model::distribution_exposed_update(individual & person, size_t & in
     return infected;
 }
 
-//#define NEW_INFECTION_ASCM
+
+#define NEW_INFECTION_ASCM
 #ifdef NEW_INFECTION_ASCM
 void disease_model::infection_ascm(double t, individual &infected_individual, household & house, std::vector<individual> & residents, std::vector<household> & houses, std::vector<std::vector<int>> & age_ref, double dt, std::vector<size_t> & newly_exposed){
-    // We will get the contacts and then infect them.
-
+    
+    // It is definitely worth splitting this function up into generating contacts and infections.
+    // This function does not change anything about house or the infected individual.
     // Beta is the probability of infection given contact.
     // Assume they have contact with everyone in the household.
     // Incorporate all of the household information as well for the quarantine.
     
     // This function will alter the infection status of any contacts.
-    int     individual_bracket = infected_individual.age_bracket; // Infected individuals age bracket.
-    double  ind_transmission = infected_individual.covid.transmissibility*beta[individual_bracket];
-    double  ind_community_transmission = (!(infected_individual.isolated||infected_individual.quarantined))*infected_individual.covid.transmissibility*beta[individual_bracket];
-    (void) ind_community_transmission;
+    int individual_bracket = infected_individual.age_bracket; // Infected individuals age bracket.
+    int cluster_number = infected_individual.covid.cluster_number;
+    bool isolated = (t > infected_individual.time_isolated); // Are they isolated.
     
-    for(int & house_contact:house.current_residents){
-        individual & contact  = residents[house_contact];
-        double r = genunf_std(generator);
-        double prob_transmission = ind_transmission*contact.vaccine_status.get_susceptibility(t); // Do we multiply by a check on isolation?
-        
-        if(r < prob_transmission*dt){ // Hack yeah (this part needs the dt to account for the timestep contact, household contacts are all day, whereas other contacts might not be)
-                infected_individual.who_infected.push_back(house_contact);
-                newly_exposed.push_back(house_contact);
-                expose_individual(contact,t);
-        };
+    if(std::isnan(infected_individual.time_isolated)){
+        throw std::logic_error("Probability of infection is Nan.");
     }
     
-    // Get contacts. (Could skip if isolated etc?)
-    std::vector<int> community_contacts; community_contacts.reserve(20); // Magic number to help with reallocation.
-    
-    for(int & contact_ref: community_contacts){
-        individual & contact = residents[contact_ref]; // Define which community member was contacted.
-        bool house_q = houses[contact.current_home].external_quarantine || houses[contact.current_home].quarantined;
+    //  Community transmission. The person will contact people depending upon the contact matrix. For each component of the contact matrix we sample how many contacts they make from each age bracket.
+    for(size_t age_strata = 0; age_strata < contact_matrix.size(); age_strata++){
         
-        // If you are isolated, or are in a house that is quarantined, you cant be accessed. This has to be incorporated.
-        // I need to check who is in the community. If you are quarantined you cant be accessed. Should this be done by changing age_ref?  Or incorpoated here. Probably age_ref.
-        // Can only infect susceptible contacts
-        if(contact.isolated || contact.external_isolation|| house_q){
+        // Average number of contacts per day.
+        double mu_contacts = contact_matrix[individual_bracket][age_strata];
 
-        }else{
-        // Track all contacts (We can then implement how good contact tracing is currently disabled)
+        // Note that contact matrix is square so doesnt matter which dimension has their size checked.
+        std::poisson_distribution<int> gen_num_contacts(mu_contacts*dt); // Create the probability distributon for the number of contacts.
 
-        if(contact.covid.infection_status == 'S'){
-
-        // Do they get infected.
-        double r = genunf_std(generator);
-        double prob_transmission = infected_individual.covid.transmissibility*beta_C[individual_bracket]*contact.vaccine_status.get_susceptibility(t);
-            if(r < prob_transmission){   // This part doesnt need the dt, because the dt is taken into account earlier by limiting the number of contacts per timesteps.
-                newly_exposed.push_back(contact_ref);
-                expose_individual(contact,t);
-                infected_individual.who_infected.push_back(contact_ref);
-                contact.covid.cluster_number = cluster_number;
-            }
-            
+        // The dt scale is so that it makes sense.
+        size_t num_in_strata = age_ref[age_strata].size(); // Must be obtained from the reference to the age matrix.
+        
+        if(num_in_strata == 0){
+            continue;    // Skip strata as no-one is in it.
         }
-
-    }
-    }
-}
+        
+        std::uniform_int_distribution<size_t> gen_reference(0,num_in_strata-1);
+        int number_comm_contacts = gen_num_contacts(generator);
+        
+            for(int i = 0; i < number_comm_contacts; i++){
+                // Should replace rand with appropriate distribution from <random>
+                
+                int contact_ref = age_ref[age_strata][gen_reference(generator)];
+//                int contact_ref = age_ref[age_strata][rand()%num_in_strata]; // Sample with replacement who is contacted from the community, could be switched to without replacement(surely wont matter).
+                // This is where we can finish generating contacts, the rest of the loop calculated whether they are infected. Should this be split ?
+                individual & contact = residents[contact_ref]; // Define which community member was contacted.
+                // Track all contacts (We can then implement how good contact tracing is currently disabled)
+                if(contact.covid.infection_status == 'S'){
+                // Do they get infected.
+                double r = genunf_std(generator);
+                double prob_transmission = (!isolated)*infected_individual.covid.transmissibility*beta_C[individual_bracket]*contact.vaccine_status.get_susceptibility(t);
+                    if(r < prob_transmission){   // This part doesnt need the dt, because the dt is taken into account earlier by limiting the number of contacts per timesteps.
+                        newly_exposed.push_back(contact_ref);
+                        expose_individual(contact,t);
+                        infected_individual.who_infected.push_back(contact_ref);
+                        contact.covid.cluster_number = cluster_number;
+                    }
+                    
+                }
+                }
+            }
+};
 
 #else
-
 void disease_model::infection_ascm(double t, individual &infected_individual, household & house, std::vector<individual> & residents, std::vector<household> & houses, std::vector<std::vector<int>> & age_ref, double dt, std::vector<size_t> & newly_exposed){
     
     // It is definitely worth splitting this function up into generating contacts and infections.
@@ -219,7 +221,7 @@ void disease_model::infection_ascm(double t, individual &infected_individual, ho
             continue;    // Skip strata as no-one is in it.
         }
 
-        // I dont bother checking if the individual interacts with themselves (This is very unlikely to happen)
+    
         int number_comm_contacts = gen_num_contacts(generator);
             for(int i = 0; i < number_comm_contacts; i++){
                 // Should replace rand with appropriate distribution from <random>
@@ -352,8 +354,7 @@ inline void disease_model::expose_individual(individual & resident, double & t){
     resident.covid.time_of_infection = resident.covid.time_of_exposure + gen_tau_E(generator);
     resident.covid.time_of_symptom_onset = resident.covid.time_of_infection + gen_tau_S(generator);
     resident.covid.time_of_recovery = resident.covid.time_of_symptom_onset + gen_tau_R(generator);
-    
-    resident.time_isolated = resident.covid.time_of_symptom_onset - gen_tau_isolation(generator);
+    resident.time_isolated = resident.covid.time_of_symptom_onset + gen_tau_isolation(generator); // This is hardcoded for now.
     
     // Determine if the individual will be asymptomatic and the severity of the disease.
     std::uniform_real_distribution<double> gen_r(0.0,1.0);
@@ -369,7 +370,15 @@ inline void disease_model::expose_individual(individual & resident, double & t){
     resident.covid.transmissibility = resident.vaccine_status.get_transmissibility(t,asymptomatic?1:0); // This will remain over the course of their infection.
     
     // Set statistics for tracking.
-    resident.infection_statistics.set_infection_stats(resident.vaccine_status.get_type(), resident.vaccine_status.get_dose(), resident.vaccine_status.get_time_of_vaccination());
+    if(resident.vaccine_status.get_time_of_vaccination()<=(t - 14.0)){
+        resident.infection_statistics.set_infection_stats(resident.vaccine_status.get_type(), resident.vaccine_status.get_dose(), resident.vaccine_status.get_time_of_vaccination());
+    }else{
+        if(resident.vaccine_status.get_dose()==1){
+            resident.infection_statistics.set_infection_stats(vaccine_type::none, 0, resident.vaccine_status.get_time_of_vaccination());
+        }else{
+            resident.infection_statistics.set_infection_stats(resident.vaccine_status.get_type(), resident.vaccine_status.get_dose()-1, resident.vaccine_status.get_time_of_vaccination());
+        }
+    }
     
 }
 

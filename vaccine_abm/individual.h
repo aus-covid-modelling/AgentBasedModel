@@ -116,7 +116,7 @@ public:
     // Is the individual isolated.
     bool    isolated = false;                   //  Is the individual isolated (because they have become sick)
     bool    external_isolation = false;         // Are they to be isolated away from everyone.
-    double  time_isolated;             // Time they are in isolation until.
+    double  time_isolated = std::nan("4");;             // Time they are in isolation until.
     
     // Could remove these for memory issues.
     //    std::pair<double , int> contacts; // This is the more appropriate way.
