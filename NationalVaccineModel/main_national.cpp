@@ -34,7 +34,7 @@ public:
     double threshold_80_time = -10.0;
 };
 
-std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution){
+std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION){
     // Inputs from QUANTIUM - pfizer doses per week etc are the proportion of doses per week in each age bracket.
     
     // Number of age brackets.
@@ -92,7 +92,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     // Timestepping parameters
     double t = 0.0;
     double t_end = 390.0+180.0; // 6 months past the end of the simulation.
-    double dt = pow(2.0,-4.0); // Probably doesnt need 16 per day but it runs so quick...
+    double dt = 7.0; // Probably doesnt need 16 per day but it runs so quick...
     
     // Vaccination event thresholds - Storage for the time when events occur.
     events thresholds;
@@ -186,29 +186,24 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             std::cout << "50 = " << t << "\n";
             catch_50 = true;
             
+            if(SEED_INFECTION.compare("50") == 0){
                 int cluster_ref = 0; // Track the exposure number, can show that one dominates.
-            while(cluster_ref < 30){
-                int exposed_resident = gen_res(generator); // Randomly sample from all the population.
-                    if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
-                        if(residents[exposed_resident].covid.infection_status!='E'){
-                            covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-                            residents[exposed_resident].covid.cluster_number = cluster_ref;
-                            cluster_ref ++ ; // Increment the number of clusters.
-                            E_ref.push_back(exposed_resident); // Start tracking them.
-                        }
+                    while(cluster_ref < 30){
+                        int exposed_resident = gen_res(generator); // Randomly sample from all the population.
+                            if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
+                                if(residents[exposed_resident].covid.infection_status!='E'){
+                                covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
+                                residents[exposed_resident].covid.cluster_number = cluster_ref;
+                                cluster_ref ++ ; // Increment the number of clusters.
+                                E_ref.push_back(exposed_resident); // Start tracking them.
                     }
-            }
-//                for(int i  = 0; i < 30; i++){
-                    
-//                    if(residents[exposed_resident].covid.infection_status!='E'){
-//                        covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-//                        residents[exposed_resident].covid.cluster_number = cluster_ref;
-//                        cluster_ref ++ ; // Increment the number of clusters.
-//                        E_ref.push_back(exposed_resident); // Start tracking them.
-//                    }
-//                }
-            t_end = t + 180.0; // Override t_end for 6 month horizon.
-            }
+                }
+        }
+                
+        dt = pow(2.0,-2.0);
+        t_end = t + 180.0; // Override t_end for 6 month horizon.
+        }
+        }
         
         if(count_second_doses >= threshold_60 && !catch_60){
             // You have surpassed 60% of population with second doses.
@@ -216,17 +211,23 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             std::cout << "60 = " << t << "\n";
             catch_60 = true;
             
-//            int cluster_ref = 0; // Track the exposure number, can show that one dominates.
-//            for(int i  = 0; i < 30; i++){
-//                int exposed_resident = gen_res(generator); // Randomly sample from all the population.
-//                if(residents[exposed_resident].covid.infection_status!='E'){
-//                    covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-//                    residents[exposed_resident].covid.cluster_number = cluster_ref;
-//                    cluster_ref ++ ; // Increment the number of clusters.
-//                    E_ref.push_back(exposed_resident); // Start tracking them.
-//                }
-//            }
-//            t_end = t + 180.0; // Override t_end for 6 month horizon.
+            if(SEED_INFECTION.compare("60") == 0){
+                int cluster_ref = 0; // Track the exposure number, can show that one dominates.
+                    while(cluster_ref < 30){
+                        int exposed_resident = gen_res(generator); // Randomly sample from all the population.
+                            if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
+                                if(residents[exposed_resident].covid.infection_status!='E'){
+                                covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
+                                residents[exposed_resident].covid.cluster_number = cluster_ref;
+                                cluster_ref ++ ; // Increment the number of clusters.
+                                E_ref.push_back(exposed_resident); // Start tracking them.
+                    }
+                }
+        }
+                
+        dt = pow(2.0,-2.0);
+        t_end = t + 180.0; // Override t_end for 6 month horizon.
+        }
         }
         
         if(count_second_doses >= threshold_70 && !catch_70){
@@ -234,18 +235,24 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             thresholds.threshold_70_time = t;
             std::cout << "70 = " << t << "\n";
             catch_70 = true;
-            
-//            int cluster_ref = 0; // Track the exposure number, can show that one dominates.
-//            for(int i  = 0; i < 30; i++){
-//                int exposed_resident = gen_res(generator); // Randomly sample from all the population.
-//                if(residents[exposed_resident].covid.infection_status!='E'){
-//                    covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-//                    residents[exposed_resident].covid.cluster_number = cluster_ref;
-//                    cluster_ref ++ ; // Increment the number of clusters.
-//                    E_ref.push_back(exposed_resident); // Start tracking them.
-//                }
-//            }
-//            t_end = t + 180.0; // Override t_end for 6 month horizon.
+            if(SEED_INFECTION.compare("70") == 0){
+                int cluster_ref = 0; // Track the exposure number, can show that one dominates.
+                    while(cluster_ref < 30){
+                        int exposed_resident = gen_res(generator); // Randomly sample from all the population.
+                            if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
+                                if(residents[exposed_resident].covid.infection_status!='E'){
+                                covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
+                                residents[exposed_resident].covid.cluster_number = cluster_ref;
+                                cluster_ref ++ ; // Increment the number of clusters.
+                                E_ref.push_back(exposed_resident); // Start tracking them.
+                    }
+                }
+        }
+                
+        dt = pow(2.0,-2.0);
+        t_end = t + 180.0; // Override t_end for 6 month horizon.
+        }
+     
         }
         
         if(count_second_doses >= threshold_80 && !catch_80){
@@ -254,17 +261,23 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             std::cout << "80 = " << t << "\n";
             catch_80 = true;
             
-//            int cluster_ref = 0; // Track the exposure number, can show that one dominates.
-//            for(int i  = 0; i < 30; i++){
-//                int exposed_resident = gen_res(generator); // Randomly sample from all the population.
-//                if(residents[exposed_resident].covid.infection_status!='E'){
-//                    covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-//                    residents[exposed_resident].covid.cluster_number = cluster_ref;
-//                    cluster_ref ++ ; // Increment the number of clusters.
-//                    E_ref.push_back(exposed_resident); // Start tracking them.
-//                }
-//            }
-//            t_end = t + 180.0; // Override t_end for 6 month horizon.
+            if(SEED_INFECTION.compare("80") == 0){
+                int cluster_ref = 0; // Track the exposure number, can show that one dominates.
+                    while(cluster_ref < 30){
+                        int exposed_resident = gen_res(generator); // Randomly sample from all the population.
+                            if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
+                                if(residents[exposed_resident].covid.infection_status!='E'){
+                                covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
+                                residents[exposed_resident].covid.cluster_number = cluster_ref;
+                                cluster_ref ++ ; // Increment the number of clusters.
+                                E_ref.push_back(exposed_resident); // Start tracking them.
+                    }
+                }
+        }
+                
+        dt = pow(2.0,-2.0);
+        t_end = t + 180.0; // Override t_end for 6 month horizon.
+        }
         }
             
         // Infection model!
@@ -319,6 +332,7 @@ int main(int argc, char *argv[]){
     std::string tp_filename;
     std::string scenario_ref;
     std::string tti_filename;
+    std::string SEED_INFECTION;
     // Create folder
     std::string folder;
 
@@ -348,6 +362,8 @@ int main(int argc, char *argv[]){
             parameters_in >> scenario_ref;
         }else if(var_name.compare("TTIDistribution")==0){
             parameters_in >> tti_filename;
+        }else if(var_name.compare("SeedInfection")==0){
+            parameters_in >> SEED_INFECTION;
         }
     }
     parameters_in.close(); // Close the file.
@@ -550,7 +566,7 @@ int main(int argc, char *argv[]){
         std::cout << "R0 = " << TP[TP_ref[i]] << "\n";
         std::cout << "beta C = " << beta_C << std::endl;
         auto begin = std::chrono::high_resolution_clock::now();
-        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution);
+        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     

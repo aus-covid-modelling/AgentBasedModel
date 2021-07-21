@@ -1,12 +1,12 @@
 // Disease parameters. (Note that fractions do not work!)
-Folder_name test
-num_sims 1
-num_houses 230000
+Folder_name Overnight80_Scenario_2
+num_sims 30
+num_houses 9600000
 average_house_size 2.6
 Beta_H 0.0
 VaccineInputs
 ContactMatrix 
 TransmissionPotential TP_posterior.txt
-VaccineScenario scenario_3
+VaccineScenario scenario_2
 TTIDistribution tti_distribution
-SeedInfection 60
+SeedInfection 80
