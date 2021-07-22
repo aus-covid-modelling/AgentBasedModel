@@ -126,7 +126,7 @@ public:
 
     //  Functions to update individual.
     void update_age(const double & dt);                         //  Update the age of an individual     
-
+    int total_contacts = 0;
 };
 
 // Age_sort and overloaded variations.

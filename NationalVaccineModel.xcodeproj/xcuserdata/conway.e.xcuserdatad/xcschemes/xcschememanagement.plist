@@ -9,10 +9,40 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>R0Trial.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>check_schedule.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>tau_check.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>2B7954DA26A9141C0037ABDC</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>2B7954F026A93DBF0037ABDC</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>2BCCA18726A7A4CA002F50D7</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>2BF70A0D26A9523700DA3DCB</key>
 		<dict>
 			<key>primary</key>
 			<true/>

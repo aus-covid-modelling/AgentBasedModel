@@ -12,7 +12,7 @@ static std::uniform_real_distribution<double> genunf_std(0.0,1.0);
 disease_model::disease_model(std::vector<double> beta_H_in, std::vector<double> beta_C_in, std::vector<std::vector<double>> contact_matrix_in, std::vector<double> b,std::vector<double> w):beta(beta_H_in),beta_C(beta_C_in){
     
     contact_matrix = contact_matrix_in; 
-    gen_tau_E = std::exponential_distribution<double>(1.0/5.0);
+    gen_tau_E = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_R = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_S = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_isolation = std::piecewise_constant_distribution<double>(b.begin(),b.end(),w.begin()); // When are they isolated.
@@ -23,7 +23,7 @@ disease_model::disease_model(std::vector<double> beta_H_in, std::vector<double> 
 disease_model::disease_model(double beta_H_in,double beta_C_in, std::vector<std::vector<double>> contact_matrix_in,std::vector<double> b,std::vector<double> w):beta(std::vector<double>(contact_matrix_in.size(),beta_H_in)),beta_C(std::vector<double>(contact_matrix_in.size(),beta_C_in)){
     
     contact_matrix = contact_matrix_in; 
-    gen_tau_E = std::exponential_distribution<double>(1.0/5.0);
+    gen_tau_E = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_R = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_S = std::exponential_distribution<double>(1.0/2.5);
     gen_tau_isolation = std::piecewise_constant_distribution<double>(b.begin(),b.end(),w.begin()); // When are they isolated.
@@ -131,6 +131,7 @@ void disease_model::infection_ascm(double t, individual &infected_individual, ho
         
             for(int i = 0; i < number_comm_contacts; i++){
                 // Should replace rand with appropriate distribution from <random>
+                infected_individual.total_contacts++;
                 
                 int contact_ref = age_ref[age_strata][gen_reference(generator)];
 //                int contact_ref = age_ref[age_strata][rand()%num_in_strata]; // Sample with replacement who is contacted from the community, could be switched to without replacement(surely wont matter).
@@ -145,6 +146,7 @@ void disease_model::infection_ascm(double t, individual &infected_individual, ho
                         newly_exposed.push_back(contact_ref);
                         expose_individual(contact,t);
                         infected_individual.who_infected.push_back(contact_ref);
+//                        infected_individual.nu
                         contact.covid.cluster_number = cluster_number;
                     }
                     

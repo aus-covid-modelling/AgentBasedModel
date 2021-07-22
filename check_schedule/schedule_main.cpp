@@ -118,7 +118,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
         std::vector<double> moderna_proportion  = moderna_doses_per_week[week_num];
         
         double t_old = t;
-        while(t < t_old + 7.0){
+        while(t < t_old + 1.0){
         // This will occur for every day in the week!
         for(size_t age_bracket = 0; age_bracket < age_dependent_vaccination.size(); age_bracket++){
             
@@ -282,25 +282,13 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             
         // Infection model!
         std::cout << "Current time = " << t << "\n";
-        // Reinitialise the new symptomatic infections.
-        std::vector<size_t> newly_symptomatic; newly_symptomatic.reserve(3000); // Reserve size so that reallocation isnt neccesary. Its a magic number.
-            std::cout << "E size " << E_ref.size() << " I size " << I_ref.size() << std::endl;
-            // Call the disease model and increment time by dt days.
-                t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+            t +=dt;
+            
 
         }
 
     }
-    
-    while(t < t_end){
-        // Infection model!
-        std::cout << "Current time = " << t << "\n";
-        // Reinitialise the new symptomatic infections.
-        std::vector<size_t> newly_symptomatic; newly_symptomatic.reserve(3000); // Reserve size so that reallocation isnt neccesary. Its a magic number.
-        
-            t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
-    
-    }
+
     // Finished model.
     return residents;
 }
@@ -523,19 +511,19 @@ int main(int argc, char *argv[]){
     vaccine_parameters no_vaccine(0,vaccine_type::none, xi_none, tau_none, q_none); // No vaccination will be passed into everyone. Required for the start of the simulation.
     
     // Pfizer vaccination parameters. (I would like to have all of this read in)
-    std::vector<double> tau_P_1{0.5978825,0.2989413};
+    std::vector<double> tau_P_1{0.67,0.335};;
     std::vector<double> q_P_1{0.1943, 0.1943, 0.1407, 0.1407, 0.1809, 0.1809,0.2211, 0.2211, 0.268, 0.268, 0.3283, 0.3283, 0.4221, 0.4221, 0.4623, 0.4623};
     std::vector<double> xi_P_1{0.28,0.28,0.266,0.266,0.553,0.553,0.602,0.602,0.56,0.56,0.574,0.574,0.616,0.616,0.518,0.518};
-    std::vector<double> tau_P_2{0.4652432, 0.2326216};
+    std::vector<double> tau_P_2{0.17, 0.085};
     std::vector<double> q_P_2{0.0493,0.0493,0.0357,0.0357,0.0459,0.0459,0.0561,0.0561,0.068,0.068,0.0833,0.0833,0.1071,0.1071,0.1173,0.1173};
     std::vector<double> xi_P_2{0.084,0.084,0.0798,0.0798,0.1659,0.1659,0.1806,0.1806,0.168,0.168,0.1722,0.1722,0.1848,0.1848,0.1554,0.1554};
     std::vector<vaccine_parameters> pfizer{vaccine_parameters(1,vaccine_type::pfizer,xi_P_1,tau_P_1,q_P_1),vaccine_parameters(2,vaccine_type::pfizer,xi_P_2,tau_P_2,q_P_2)};
 
     // Astrazeneca vaccination parameters.
-    std::vector<double> tau_AZ_1{0.5757387,0.2878694};
+    std::vector<double> tau_AZ_1{0.67,0.335};
     std::vector<double> q_AZ_1{0.1943,0.1943,0.1407,0.1407,0.1809,0.1809,0.2211,0.2211,0.268,0.268,0.3283,0.3283,0.4221,0.4221,0.4623,0.4623}; // Probability of being symptomatic.
     std::vector<double> xi_AZ_1{0.328,0.328,0.3116,0.3116,0.6478,0.6478,0.7052,0.7052,0.656,0.656,0.6724,0.6724,0.7216,0.7216,0.6068,0.6068}; // Suscseptibility.
-    std::vector<double> tau_AZ_2{0.4271104, 0.2135552};
+    std::vector<double> tau_AZ_2{0.39, 0.195};
     std::vector<double> q_AZ_2{0.1131,0.1131,0.0819,0.0819,0.1053,0.1053,0.1287,0.1287,0.156,0.156,0.1911,0.1911,0.2457,0.2457,0.2691,0.2691};
     std::vector<double> xi_AZ_2{0.16,0.16,0.152,0.152,0.316,0.316,0.344,0.344,0.32,0.32,0.328,0.328,0.352,0.352,0.296,0.296};
     std::vector<vaccine_parameters> astrazeneca{vaccine_parameters(1,vaccine_type::astrazeneca,xi_AZ_1,tau_AZ_1,q_AZ_1),vaccine_parameters(2,vaccine_type::astrazeneca,xi_AZ_2,tau_AZ_2,q_AZ_2)};
@@ -580,36 +568,48 @@ int main(int argc, char *argv[]){
 
         if(output_file.is_open()){
 
-            output_file << "Individual, Age, Current Vaccine, Current doses, Time of first dose, Time of last dose, Vaccine at infection, Doses at infection, Time latest dose at infection, Severity, Symptomatic, Time isolated, Detected case, Time of detection, Time of exposure, Time of infection, Time of symptom onset, Time of recovery, Cluster, Secondary Infections" << std::endl;
+//            output_file << "Individual, Age, Current Vaccine, Current doses, Time of first dose, Time of last dose, Vaccine at infection, Doses at infection, Time latest dose at infection, Severity, Symptomatic, Time isolated, Detected case, Time of detection, Time of exposure, Time of infection, Time of symptom onset, Time of recovery, Cluster, Secondary Infections" << std::endl;
+            
+            output_file << "Individual, Age, Current Vaccine, Current doses, Time of first dose, Time of last dose "<< std::endl;
             
             int ind_num = 0;
             // To do: we must define both the vaccination status of the individual at infection and at end?
-            for(individual & person: residents){
-                bool is_infected = !std::isnan(person.covid.time_of_exposure); // Are they infected.
+            for(individual &person:residents){
                 vaccine_type  vac = person.vaccine_status.get_type();
-                std::string vaccine_name = (vac==vaccine_type::none)?"None":(vac==vaccine_type::pfizer)?"Pfizer":(vac==vaccine_type::astrazeneca)?"Astrazeneca":"Moderna";
-                
-                // Infected write!
-                if(is_infected){
-                    // Determine vaccine at time of infection.
-                    vaccine_type infection_vac = person.infection_statistics.vaccine_status;
-                    std::string vac_at_infection = (infection_vac==vaccine_type::none)?"None":(infection_vac==vaccine_type::pfizer)?"Pfizer":(infection_vac==vaccine_type::astrazeneca)?"Astrazeneca":(infection_vac==vaccine_type::moderna)?"Moderna":"error";
-                    
-                    output_file << ind_num << ", " << person.age << ", ";
-                    
-                    output_file << vaccine_name << ", " << person.vaccine_status.get_dose() <<", " << person.vaccine_status.get_first_time() << ", " << ((person.vaccine_status.get_dose()==2)?person.vaccine_status.get_time_of_vaccination():std::nan("1")) << ", "; // Vaccination at end of simulation.
-                    
-                    output_file << vac_at_infection << ", " << person.infection_statistics.doses << ", " << person.infection_statistics.time_of_last_dose << ", ";
-                    
-                    output_file << (person.covid.severe?"Severe":"Mild") << ", " << (person.covid.asymptomatic?"Asymptomatic":"Symptomatic") << ", "<< person.time_isolated << ", " << (person.covid.detected_case?"Detected":"Undetected") << ", " << person.covid.time_of_detection << ", ";
-                    
-                    output_file << person.covid.time_of_exposure << ", " << person.covid.time_of_infection << ", " << person.covid.time_of_symptom_onset << ", ";
-                    output_file << person.covid.time_of_recovery << ", " << person.covid.cluster_number << ", " << person.who_infected.size() << std::endl;
-                }else{
+            std::string vaccine_name = (vac==vaccine_type::none)?"None":(vac==vaccine_type::pfizer)?"Pfizer":(vac==vaccine_type::astrazeneca)?"Astrazeneca":"Moderna";
+            output_file << ind_num << ", " << person.age << ", ";
 
-                }
-                ind_num ++;
+                output_file << vaccine_name << ", " << person.vaccine_status.get_dose() <<", " << person.vaccine_status.get_first_time() << ", " << ((person.vaccine_status.get_dose()==2)?person.vaccine_status.get_time_of_vaccination():std::nan("1")) << std::endl; // Vaccination at end of simulation.
+                    ind_num ++;
+                
+                //
             }
+//            for(individual & person: residents){
+//                bool is_infected = !std::isnan(person.covid.time_of_exposure); // Are they infected.
+//                vaccine_type  vac = person.vaccine_status.get_type();
+//                std::string vaccine_name = (vac==vaccine_type::none)?"None":(vac==vaccine_type::pfizer)?"Pfizer":(vac==vaccine_type::astrazeneca)?"Astrazeneca":"Moderna";
+//
+//                // Infected write!
+//                if(is_infected){
+//                    // Determine vaccine at time of infection.
+//                    vaccine_type infection_vac = person.infection_statistics.vaccine_status;
+//                    std::string vac_at_infection = (infection_vac==vaccine_type::none)?"None":(infection_vac==vaccine_type::pfizer)?"Pfizer":(infection_vac==vaccine_type::astrazeneca)?"Astrazeneca":(infection_vac==vaccine_type::moderna)?"Moderna":"error";
+//
+//                    output_file << ind_num << ", " << person.age << ", ";
+//
+//                    output_file << vaccine_name << ", " << person.vaccine_status.get_dose() <<", " << person.vaccine_status.get_first_time() << ", " << ((person.vaccine_status.get_dose()==2)?person.vaccine_status.get_time_of_vaccination():std::nan("1")) << ", "; // Vaccination at end of simulation.
+//
+//                    output_file << vac_at_infection << ", " << person.infection_statistics.doses << ", " << person.infection_statistics.time_of_last_dose << ", ";
+//
+//                    output_file << (person.covid.severe?"Severe":"Mild") << ", " << (person.covid.asymptomatic?"Asymptomatic":"Symptomatic") << ", "<< person.time_isolated << ", " << (person.covid.detected_case?"Detected":"Undetected") << ", " << person.covid.time_of_detection << ", ";
+//
+//                    output_file << person.covid.time_of_exposure << ", " << person.covid.time_of_infection << ", " << person.covid.time_of_symptom_onset << ", ";
+//                    output_file << person.covid.time_of_recovery << ", " << person.covid.cluster_number << ", " << person.who_infected.size() << std::endl;
+//                }else{
+//
+//                }
+            //                ind_num ++;
+//            }
 
 
         // Close file.
