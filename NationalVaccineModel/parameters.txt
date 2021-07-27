@@ -10,3 +10,4 @@ TransmissionPotential TP_posterior.txt
 VaccineScenario scenario_2
 TTIDistribution tti_distribution
 SeedInfection 50
+TTIQ partial

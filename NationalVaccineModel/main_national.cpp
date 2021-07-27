@@ -34,7 +34,7 @@ public:
     double threshold_80_time = -10.0;
 };
 
-std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION){
+std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ){
     // Inputs from QUANTIUM - pfizer doses per week etc are the proportion of doses per week in each age bracket.
     
     // Number of age brackets.
@@ -43,9 +43,17 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     //  Disease model parameters. (Will be varied)
     double beta  = parameters.beta; // Household infection rate.
     
-    // Disease model initialisation.
-    disease_model covid(beta, beta_C, contact_matrix,tti_distribution[0],tti_distribution[1]); // Load the disease model, asymptomatic infections and severity are associated with each individual.
+    // Disease model initialisation.Check which TTIQ will be used.
+    std::vector<double> prob_tti;
+    if(TTIQ.compare("optimal")==0){
+        prob_tti = tti_distribution[2]; // Load the disease model, asymptomatic infections and severity are associated with each individual.
+    }else if(TTIQ.compare("partial")==0){
+        prob_tti = tti_distribution[1]; // Load the disease model, asymptomatic infections and severity are associated with each individual.
+    }else{
+        throw std::logic_error("Specified method for TTIQ not found.");
+    }
     
+    disease_model covid(beta, beta_C, contact_matrix,tti_distribution[0],prob_tti); // Load the disease model, asymptomatic infections and
     
     //  Parameters for households.
     int     num_houses              = parameters.num_houses;
@@ -287,6 +295,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             std::cout << "E size " << E_ref.size() << " I size " << I_ref.size() << std::endl;
             // Call the disease model and increment time by dt days.
                 t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+            
 
         }
 
@@ -333,6 +342,7 @@ int main(int argc, char *argv[]){
     std::string scenario_ref;
     std::string tti_filename;
     std::string SEED_INFECTION;
+    std::string TTIQ;
     // Create folder
     std::string folder;
 
@@ -364,6 +374,8 @@ int main(int argc, char *argv[]){
             parameters_in >> tti_filename;
         }else if(var_name.compare("SeedInfection")==0){
             parameters_in >> SEED_INFECTION;
+        }else if(var_name.compare("TTIQ")==0){
+            parameters_in >> TTIQ;
         }
     }
     parameters_in.close(); // Close the file.
@@ -568,7 +580,7 @@ int main(int argc, char *argv[]){
         std::cout << "R0 = " << TP[TP_ref[i]] << "\n";
         std::cout << "beta C = " << beta_C << std::endl;
         auto begin = std::chrono::high_resolution_clock::now();
-        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION);
+        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION,TTIQ);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     
