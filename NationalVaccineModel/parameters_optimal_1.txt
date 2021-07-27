@@ -1,7 +1,7 @@
 // Disease parameters. (Note that fractions do not work!)
-Folder_name Overnight50_Scenario_19_partial
-num_sims 1
-num_houses 2300000
+Folder_name Overnight50_Scenario_19_optimal
+num_sims 10
+num_houses 96000000
 average_house_size 2.6
 Beta_H 0.0
 VaccineInputs
@@ -10,4 +10,4 @@ TransmissionPotential TP_posterior.txt
 VaccineScenario scenario_19
 TTIDistribution tti_distribution
 SeedInfection 50
-TTIQ partial
+TTIQ optimal
