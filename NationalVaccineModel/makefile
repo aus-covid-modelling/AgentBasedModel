@@ -3,8 +3,8 @@ IBM = ../vaccine_abm/*.cpp
 
 
 run_build:
-	$(CC) -c $(IBM)
-	$(CC) -o Run main_national.cpp *.o
+	$(CC) -g -c $(IBM)
+	$(CC) -g -o Run main_national.cpp *.o
 
 clean: 
 	rm  *.o Run
