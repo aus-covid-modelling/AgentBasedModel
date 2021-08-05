@@ -617,19 +617,17 @@ int main(int argc, char *argv[]){
             for(individual & person: residents){
                 bool is_infected = !std::isnan(person.covid.time_of_exposure); // Are they infected.
                 vaccine_type  vac = person.vaccine_status.get_type();
-                std::string vaccine_name = (vac==vaccine_type::none)?"None":(vac==vaccine_type::pfizer)?"Pfizer":(vac==vaccine_type::astrazeneca)?"Astrazeneca":"Moderna";
                 
                 // Infected write!
                 if(is_infected){
                     // Determine vaccine at time of infection.
                     vaccine_type infection_vac = person.infection_statistics.vaccine_status;
-                    std::string vac_at_infection = (infection_vac==vaccine_type::none)?"None":(infection_vac==vaccine_type::pfizer)?"Pfizer":(infection_vac==vaccine_type::astrazeneca)?"Astrazeneca":(infection_vac==vaccine_type::moderna)?"Moderna":"error";
                     
                     output_file << ind_num << ", " << person.age << ", ";
                     
-                    output_file << vaccine_name << ", " << person.vaccine_status.get_dose() <<", " << person.vaccine_status.get_first_time() << ", " << ((person.vaccine_status.get_dose()==2)?person.vaccine_status.get_time_of_vaccination():std::nan("1")) << ", "; // Vaccination at end of simulation.
+                    output_file << vac << ", " << person.vaccine_status.get_dose() <<", " << person.vaccine_status.get_first_time() << ", " << ((person.vaccine_status.get_dose()==2)?person.vaccine_status.get_time_of_vaccination():std::nan("1")) << ", "; // Vaccination at end of simulation.
                     
-                    output_file << vac_at_infection << ", " << person.infection_statistics.doses << ", " << person.infection_statistics.time_of_last_dose << ", ";
+                    output_file << infection_vac << ", " << person.infection_statistics.doses << ", " << person.infection_statistics.time_of_last_dose << ", ";
                     
                     output_file << (person.covid.severe?"Severe":"Mild") << ", " << (person.covid.asymptomatic?"Asymptomatic":"Symptomatic") << ", "<< person.time_isolated << ", " << (person.covid.detected_case?"Detected":"Undetected") << ", " << person.covid.time_of_detection << ", ";
                     

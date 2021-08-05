@@ -2,7 +2,15 @@
 #define VACCINATION_H
 #include <vector>
 #include <cmath>
-enum class vaccine_type{none, pfizer, astrazeneca, moderna}; // Declare an enum for the different tpes of vaccines.
+#include <iostream>
+
+enum class vaccine_type{
+    none, 
+    pfizer, 
+    astrazeneca, 
+    moderna}; // Declare an enum for the different tpes of vaccines.
+
+std::ostream &operator<< (std::ostream& strm, const vaccine_type& vac_name);
 
 // This is for the vaccine parameters. Pfizer etc.
 class vaccine_parameters{
