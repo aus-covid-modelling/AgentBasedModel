@@ -5,3 +5,5 @@
 *.o
 
 NationalVaccineModel/Run.exe
+
+NationalVaccineModel/dev-parameters.txt
