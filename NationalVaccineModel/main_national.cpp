@@ -10,7 +10,10 @@
 #include <sys/types.h>
 #include <chrono>
 #include <algorithm>
-#include <direct.h>
+
+#ifdef _WIN32
+    #include <direct.h>
+#endif
 
 
 // Define the information required for the contact ibm.
