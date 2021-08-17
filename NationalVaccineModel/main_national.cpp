@@ -394,10 +394,12 @@ int main(int argc, char *argv[]){
     std::shuffle(TP_ref.begin(),TP_ref.end(),std::mt19937{std::random_device{}()}); // Randomly shuffle the vector. We will be sample from the first num_sims.
     
     // Create folder.
-    std::string directory = "./outputs/" + folder;
+    std::string directory = (std::string) parameters_json["output_directory"] + folder;
     #ifdef _WIN32
+        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
         int main_folder = mkdir(directory.c_str()); // Create folder.
     #else
+        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
         int main_folder = mkdir(directory.c_str(),0777); // Create folder.
     #endif
     (void) main_folder; // Unused variable;

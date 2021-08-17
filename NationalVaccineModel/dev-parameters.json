@@ -1,5 +1,6 @@
 {
     "folder_name": "dev",
+    "output_directory": "./outputs/",
     "num_sims": 1,
     "start_sims": 5,
     "num_houses": 2300,
