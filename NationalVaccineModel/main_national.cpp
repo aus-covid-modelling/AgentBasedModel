@@ -582,7 +582,10 @@ int main(int argc, char *argv[]){
         printf("Time measured: %.3f seconds.\n", elapsed.count() * 1e-9);
         
         // Filename.
-        std::string filename = directory  + "/sim_number_" + std::to_string(i+1) + ".csv";
+        // Increment by 1 to not start at 0, then adjust based on the "start_sim" input.
+        int start_sims = parameters_json["start_sims"];
+        int sim_number = i+1 + (start_sims-1);
+        std::string filename = directory  + "/sim_number_" + std::to_string(sim_number) + ".csv";
         // Write file.
         std::ofstream output_file(filename);
 

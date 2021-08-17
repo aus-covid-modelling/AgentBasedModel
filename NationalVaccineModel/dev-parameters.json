@@ -1,6 +1,7 @@
 {
     "folder_name": "dev",
     "num_sims": 1,
+    "start_sims": 5,
     "num_houses": 2300,
     "average_house_size": 2.6,
     "Beta_H": 0.0,
