@@ -437,71 +437,11 @@ int main(int argc, char *argv[]){
         throw std::logic_error("contact_matrix.txt not found in working directory.\n");
     }
     
-    std::vector<std::vector<double>> pfizer_doses_per_week;
-    std::ifstream pfizer_schedule("./vaccination_input/pfizer_" + scenario_ref + ".csv");
+    std::vector<std::vector<double>> pfizer_doses_per_week = setup_vaccine_schedule("./vaccination_input/pfizer_" + scenario_ref + ".csv");
+        
+    std::vector<std::vector<double>> AZ_doses_per_week = setup_vaccine_schedule("./vaccination_input/AZ_" + scenario_ref + ".csv");
 
-    if(pfizer_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(pfizer_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            pfizer_doses_per_week.push_back(row);
-        }
-        pfizer_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for pfizer was not found in vaccination_input.\n");
-    }
-    
-    std::vector<std::vector<double>> AZ_doses_per_week;
-    std::ifstream AZ_schedule("./vaccination_input/AZ_" + scenario_ref + ".csv");
-
-    if(AZ_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(AZ_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            AZ_doses_per_week.push_back(row);
-        }
-        AZ_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for AZ was not found in vaccination_input.\n");
-    }
-    
-    std::vector<std::vector<double>> moderna_doses_per_week;
-    std::ifstream M_schedule("./vaccination_input/Moderna_" + scenario_ref + ".csv");
-
-    if(M_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(M_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            moderna_doses_per_week.push_back(row);
-        }
-        M_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for Moderna was not found in vaccination_input.\n");
-    }
+    std::vector<std::vector<double>> moderna_doses_per_week = setup_vaccine_schedule("./vaccination_input/Moderna_" + scenario_ref + ".csv");
 
     std::vector<std::vector<double>> tti_distribution;
     std::ifstream tti_stream(tti_filename + ".csv");

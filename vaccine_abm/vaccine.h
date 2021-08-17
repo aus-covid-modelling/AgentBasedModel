@@ -11,6 +11,7 @@ enum class vaccine_type{
     moderna}; // Declare an enum for the different tpes of vaccines.
 
 std::ostream &operator<< (std::ostream& strm, const vaccine_type& vac_name);
+std::vector<std::vector<double>> setup_vaccine_schedule(std::string schedule_file);
 
 // This is for the vaccine parameters. Pfizer etc.
 class vaccine_parameters{
