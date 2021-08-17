@@ -404,7 +404,8 @@ int main(int argc, char *argv[]){
     
 
     //  Population demographic parameters (There should be 16 here)
-    std::vector<double> population_pi{0.06020956, 0.06341471, 0.06226446, 0.05797783, 0.06569669, 0.07352615, 0.07472913, 0.07165560, 0.06332489, 0.06493163, 0.06128505, 0.06041115, 0.05616401, 0.04919153, 0.04334894, 0.03050795 + 0.04136071}; // Taken from QUANTIUM
+    // Now found in the parameters file (field population_pi)
+    std::vector<double> population_pi = parameters_json["population_pi"];
 //    {0.061,0.063,0.061,0.057,0.066,0.074,0.075,0.071,0.063,0.065,0.059,0.061,0.056,0.049,0.043,0.031+0.021+0.022}; // Old.
     int num_brackets    = (int) population_pi.size();
     std::vector<double> vaccinated_proportion(num_brackets,0.0);
