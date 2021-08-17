@@ -340,8 +340,6 @@ int main(int argc, char *argv[]){
     
     // Read in the parameter files.
     std::ifstream parameters_in(filename);
-    std::string line;
-    std::string var_name;
     std::string tp_filename;
     std::string scenario_ref;
     std::string tti_filename;
