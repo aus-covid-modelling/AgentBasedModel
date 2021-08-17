@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <chrono>
 #include <algorithm>
+#include "../nlohmann/json.hpp"
 
 #ifdef _WIN32
     #include <direct.h>
@@ -336,17 +337,7 @@ int main(int argc, char *argv[]){
     }
     // Parameter read in and simulation here!
     std::string filename(argv[1]);
-    std::string file_type(".txt");
     
-    try{
-        if(filename.compare(filename.size()-4,file_type.size(),file_type)!=0){
-            throw std::logic_error("Filename must end in .txt");
-        }
-    }catch(std::logic_error &e){
-        filename = filename + file_type;
-        std::cout << "Appending .txt to filename... filename is " << filename << "\n";
-    }
-
     // Read in the parameter files.
     std::ifstream parameters_in(filename);
     std::string line;
@@ -359,38 +350,26 @@ int main(int argc, char *argv[]){
     // Create folder
     std::string folder;
 
+    nlohmann::json parameters_json;
+    parameters_in >> parameters_json;
+
     // Disease model parameters structure
     parameter_struct parameters;
-    int num_sims = 0;
+    int num_sims = parameters_json["num_sims"];
+    std::cout << "Number of simulations: " << num_sims << std::endl;
 
-    // Read in the parameters file.
-    while(!parameters_in.eof()){
-        parameters_in >> var_name;
-        // Assign to appropriate parameters.
-        if(var_name.compare("num_sims")==0){
-            parameters_in >> num_sims;
-            std::cout << num_sims << std::endl;
-        }if(var_name.compare("Beta_H")==0){
-            parameters_in >> parameters.beta;
-            std::cout << parameters.beta << std::endl;
-        }else if(var_name.compare("Folder_name")==0){
-            parameters_in >> folder;
-        }else if(var_name.compare("num_houses")==0){
-            parameters_in >> parameters.num_houses;
-        }else if(var_name.compare("average_house_size")==0){
-            parameters_in >> parameters.average_house_size;
-        }else if(var_name.compare("TransmissionPotential")==0){
-            parameters_in >> tp_filename;
-        }else if(var_name.compare("VaccineScenario")==0){
-            parameters_in >> scenario_ref;
-        }else if(var_name.compare("TTIDistribution")==0){
-            parameters_in >> tti_filename;
-        }else if(var_name.compare("SeedInfection")==0){
-            parameters_in >> SEED_INFECTION;
-        }else if(var_name.compare("TTIQ")==0){
-            parameters_in >> TTIQ;
-        }
-    }
+    parameters.beta = parameters_json["Beta_H"];
+    std::cout << "Beta_H: " << parameters.beta << std::endl;
+    parameters.average_house_size = parameters_json["average_house_size"];
+    parameters.num_houses = parameters_json["num_houses"];
+
+    folder = parameters_json["folder_name"];
+    tp_filename = parameters_json["transmission_potential"];
+    scenario_ref = parameters_json["vaccine_scenario"];
+    tti_filename = parameters_json["tti_distribution"];
+    SEED_INFECTION = parameters_json["seed_infection"];
+    TTIQ = parameters_json["TTIQ"];
+
     parameters_in.close(); // Close the file.
     
     

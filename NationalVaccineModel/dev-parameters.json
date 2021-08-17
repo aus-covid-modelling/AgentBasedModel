@@ -1,0 +1,14 @@
+{
+    "folder_name": "dev",
+    "num_sims": 1,
+    "num_houses": 2300,
+    "average_house_size": 2.6,
+    "Beta_H": 0.0,
+    "vaccine_inputs": "none",
+    "contact_matrix": "none",
+    "transmission_potential": "TP_posterior.txt",
+    "vaccine_scenario": "scenario_19",
+    "tti_distribution": "tti_distribution",
+    "seed_infection": "50",
+    "TTIQ": "partial"
+}
