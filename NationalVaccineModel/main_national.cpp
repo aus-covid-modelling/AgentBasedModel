@@ -399,7 +399,7 @@ int main(int argc, char *argv[]){
         int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
         int main_folder = mkdir(directory.c_str()); // Create folder.
     #else
-        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
+        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str(), 0777);
         int main_folder = mkdir(directory.c_str(),0777); // Create folder.
     #endif
     (void) main_folder; // Unused variable;
