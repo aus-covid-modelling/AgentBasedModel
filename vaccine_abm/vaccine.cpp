@@ -3,6 +3,29 @@
 #include <cmath>
 // In this code, it is assumed that it has been long enough to get your previous doses immunity!
 
+//Serialisation for vaccine types
+//If new vaccines are added then they will need to go in here.
+std::ostream &operator<< (std::ostream& strm, const vaccine_type& vac_name) {
+    
+    switch (vac_name) {
+        case vaccine_type::none:
+            strm << "None";
+            break;
+        case vaccine_type::pfizer:
+            strm << "Pfizer";
+            break;
+        case vaccine_type::moderna:
+            strm << "Moderna";
+            break;
+        case vaccine_type::astrazeneca:
+            strm << "AstraZeneca";
+            break;
+        default:
+            strm << "Unknown";
+    }
+    return strm;
+}
+
 vaccine_parameters::vaccine_parameters(int dose, vaccine_type vac_name, std::vector<double> xi_in, std::vector<double> tau_in, std::vector<double> p_a):type(vac_name),susceptibility(xi_in),transmissibility(tau_in),proportion_asymptomatic(p_a),dose_number(dose){
     // Throw error in constructor if the dimensions are off.
     if(p_a.size()!=xi_in.size()){
