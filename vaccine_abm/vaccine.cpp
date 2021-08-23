@@ -1,6 +1,9 @@
 #include "vaccine.h"
 #include <iostream>
 #include <cmath>
+#include <string>
+#include <fstream>
+#include <sstream>
 // In this code, it is assumed that it has been long enough to get your previous doses immunity!
 
 //Serialisation for vaccine types
@@ -38,6 +41,39 @@ vaccine_parameters::vaccine_parameters(int dose, vaccine_type vac_name, std::vec
 vaccine_type vaccine_parameters::get_type(){return type;};
 
 int vaccine_parameters::get_dose(){return dose_number;};
+
+/**
+ * Set up vaccine schedule from CSV. Convenience function to read in the vaccine schedule
+ * from a given CSV.
+ * @param schedule_file String indicating path to the schedule file
+ * @return Vector containing the number of doses per age-group per week.
+ */
+std::vector<std::vector<double>> setup_vaccine_schedule(std::string schedule_file) {
+    
+    std::ifstream schedule_ifstream(schedule_file);
+    std::vector<std::vector<double>> schedule_doses_per_week;
+
+    if(schedule_ifstream.is_open()){
+        std::string line;
+        double value;
+        while(std::getline(schedule_ifstream,line)){
+            std::stringstream stream_line(line);
+            std::string row_val;
+            std::vector<double> row;
+            while(std::getline(stream_line,row_val,',')){
+                std::stringstream stream_row(row_val);
+                stream_row >> value;
+                row.push_back(value);
+            }
+            schedule_doses_per_week.push_back(row);
+        }
+        schedule_ifstream.close();
+    } else {
+        throw std::logic_error("The schedule file for" + schedule_file + "was not found in vaccination_input.\n");
+    }
+
+    return (schedule_doses_per_week);
+};
 
 double vaccine_parameters::get_susceptibility(const int & age_bracket){
     if(age_bracket>=(int)susceptibility.size()){

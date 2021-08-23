@@ -1,4 +1,4 @@
-CC = g++ -std=c++11 -Wpedantic -O3
+CC = g++ -std=c++11 -Wpedantic -O3 -I ../nlohmann
 IBM = ../vaccine_abm/*.cpp
 
 

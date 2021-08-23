@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <chrono>
 #include <algorithm>
+#include "../nlohmann/json.hpp"
 
 #ifdef _WIN32
     #include <direct.h>
@@ -336,21 +337,9 @@ int main(int argc, char *argv[]){
     }
     // Parameter read in and simulation here!
     std::string filename(argv[1]);
-    std::string file_type(".txt");
     
-    try{
-        if(filename.compare(filename.size()-4,file_type.size(),file_type)!=0){
-            throw std::logic_error("Filename must end in .txt");
-        }
-    }catch(std::logic_error &e){
-        filename = filename + file_type;
-        std::cout << "Appending .txt to filename... filename is " << filename << "\n";
-    }
-
     // Read in the parameter files.
     std::ifstream parameters_in(filename);
-    std::string line;
-    std::string var_name;
     std::string tp_filename;
     std::string scenario_ref;
     std::string tti_filename;
@@ -359,38 +348,26 @@ int main(int argc, char *argv[]){
     // Create folder
     std::string folder;
 
+    nlohmann::json parameters_json;
+    parameters_in >> parameters_json;
+
     // Disease model parameters structure
     parameter_struct parameters;
-    int num_sims = 0;
+    int num_sims = parameters_json["num_sims"];
+    std::cout << "Number of simulations: " << num_sims << std::endl;
 
-    // Read in the parameters file.
-    while(!parameters_in.eof()){
-        parameters_in >> var_name;
-        // Assign to appropriate parameters.
-        if(var_name.compare("num_sims")==0){
-            parameters_in >> num_sims;
-            std::cout << num_sims << std::endl;
-        }if(var_name.compare("Beta_H")==0){
-            parameters_in >> parameters.beta;
-            std::cout << parameters.beta << std::endl;
-        }else if(var_name.compare("Folder_name")==0){
-            parameters_in >> folder;
-        }else if(var_name.compare("num_houses")==0){
-            parameters_in >> parameters.num_houses;
-        }else if(var_name.compare("average_house_size")==0){
-            parameters_in >> parameters.average_house_size;
-        }else if(var_name.compare("TransmissionPotential")==0){
-            parameters_in >> tp_filename;
-        }else if(var_name.compare("VaccineScenario")==0){
-            parameters_in >> scenario_ref;
-        }else if(var_name.compare("TTIDistribution")==0){
-            parameters_in >> tti_filename;
-        }else if(var_name.compare("SeedInfection")==0){
-            parameters_in >> SEED_INFECTION;
-        }else if(var_name.compare("TTIQ")==0){
-            parameters_in >> TTIQ;
-        }
-    }
+    parameters.beta = parameters_json["Beta_H"];
+    std::cout << "Beta_H: " << parameters.beta << std::endl;
+    parameters.average_house_size = parameters_json["average_house_size"];
+    parameters.num_houses = parameters_json["num_houses"];
+
+    folder = parameters_json["folder_name"];
+    tp_filename = parameters_json["transmission_potential"];
+    scenario_ref = parameters_json["vaccine_scenario"];
+    tti_filename = parameters_json["tti_distribution"];
+    SEED_INFECTION = parameters_json["seed_infection"];
+    TTIQ = parameters_json["TTIQ"];
+
     parameters_in.close(); // Close the file.
     
     
@@ -417,17 +394,20 @@ int main(int argc, char *argv[]){
     std::shuffle(TP_ref.begin(),TP_ref.end(),std::mt19937{std::random_device{}()}); // Randomly shuffle the vector. We will be sample from the first num_sims.
     
     // Create folder.
-    std::string directory = "./outputs/" + folder;
+    std::string directory = (std::string) parameters_json["output_directory"] + folder;
     #ifdef _WIN32
+        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
         int main_folder = mkdir(directory.c_str()); // Create folder.
     #else
+        int top_folder = mkdir(((std::string) parameters_json["output_directory"]).c_str());
         int main_folder = mkdir(directory.c_str(),0777); // Create folder.
     #endif
     (void) main_folder; // Unused variable;
     
 
     //  Population demographic parameters (There should be 16 here)
-    std::vector<double> population_pi{0.06020956, 0.06341471, 0.06226446, 0.05797783, 0.06569669, 0.07352615, 0.07472913, 0.07165560, 0.06332489, 0.06493163, 0.06128505, 0.06041115, 0.05616401, 0.04919153, 0.04334894, 0.03050795 + 0.04136071}; // Taken from QUANTIUM
+    // Now found in the parameters file (field population_pi)
+    std::vector<double> population_pi = parameters_json["population_pi"];
 //    {0.061,0.063,0.061,0.057,0.066,0.074,0.075,0.071,0.063,0.065,0.059,0.061,0.056,0.049,0.043,0.031+0.021+0.022}; // Old.
     int num_brackets    = (int) population_pi.size();
     std::vector<double> vaccinated_proportion(num_brackets,0.0);
@@ -457,71 +437,11 @@ int main(int argc, char *argv[]){
         throw std::logic_error("contact_matrix.txt not found in working directory.\n");
     }
     
-    std::vector<std::vector<double>> pfizer_doses_per_week;
-    std::ifstream pfizer_schedule("./vaccination_input/pfizer_" + scenario_ref + ".csv");
+    std::vector<std::vector<double>> pfizer_doses_per_week = setup_vaccine_schedule("./vaccination_input/pfizer_" + scenario_ref + ".csv");
+        
+    std::vector<std::vector<double>> AZ_doses_per_week = setup_vaccine_schedule("./vaccination_input/AZ_" + scenario_ref + ".csv");
 
-    if(pfizer_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(pfizer_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            pfizer_doses_per_week.push_back(row);
-        }
-        pfizer_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for pfizer was not found in vaccination_input.\n");
-    }
-    
-    std::vector<std::vector<double>> AZ_doses_per_week;
-    std::ifstream AZ_schedule("./vaccination_input/AZ_" + scenario_ref + ".csv");
-
-    if(AZ_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(AZ_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            AZ_doses_per_week.push_back(row);
-        }
-        AZ_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for AZ was not found in vaccination_input.\n");
-    }
-    
-    std::vector<std::vector<double>> moderna_doses_per_week;
-    std::ifstream M_schedule("./vaccination_input/Moderna_" + scenario_ref + ".csv");
-
-    if(M_schedule.is_open()){
-        std::string line;
-        double value;
-        while(std::getline(M_schedule,line)){
-            std::stringstream stream_line(line);
-            std::string row_val;
-            std::vector<double> row;
-            while(std::getline(stream_line,row_val,',')){
-                std::stringstream stream_row(row_val);
-                stream_row >> value;
-                row.push_back(value);
-            }
-            moderna_doses_per_week.push_back(row);
-        }
-        M_schedule.close();
-    }else{
-        throw std::logic_error("The schedule file for Moderna was not found in vaccination_input.\n");
-    }
+    std::vector<std::vector<double>> moderna_doses_per_week = setup_vaccine_schedule("./vaccination_input/Moderna_" + scenario_ref + ".csv");
 
     std::vector<std::vector<double>> tti_distribution;
     std::ifstream tti_stream(tti_filename + ".csv");
@@ -604,7 +524,10 @@ int main(int argc, char *argv[]){
         printf("Time measured: %.3f seconds.\n", elapsed.count() * 1e-9);
         
         // Filename.
-        std::string filename = directory  + "/sim_number_" + std::to_string(i+1) + ".csv";
+        // Increment by 1 to not start at 0, then adjust based on the "start_sim" input.
+        int start_sims = parameters_json["start_sims"];
+        int sim_number = i+1 + (start_sims-1);
+        std::string filename = directory  + "/sim_number_" + std::to_string(sim_number) + ".csv";
         // Write file.
         std::ofstream output_file(filename);
 
