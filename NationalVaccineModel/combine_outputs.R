@@ -9,7 +9,7 @@ args <- commandArgs(trailingOnly = T)
 max_t  = 600
 i <- 1
 parfile <- fromJSON(file=paste0(args[1], ".json"))
-folder <- paste0(parfile$output_director, parfile$folder_name)
+folder <- paste0(parfile$output_directory, parfile$folder_name)
 
 num_sims <- length(list.files(folder))
 sim_numbers <- gsub(pattern = "sim_number_|.csv", "", list.files(folder)) %>% as.numeric()
@@ -17,7 +17,8 @@ sim_numbers <- gsub(pattern = "sim_number_|.csv", "", list.files(folder)) %>% as
 completed_df <- lapply(sim_numbers, function(i) {
   file_name <- paste(folder,"/sim_number_",i,".csv",sep = "")
   individuals <- fread(file_name)
-  
+  infected_individuals <- individuals %>% dplyr::filter(!is.na(`Time of exposure`))
+
   infected_individuals <- mutate(infected_individuals, `Age bracket` = cut(Age, breaks = c(seq(0,80,by = 5),Inf),include.lowest = TRUE, right= FALSE)) 
   
   infected_individuals <- mutate(infected_individuals, `Date symptoms` = cut(`Time of symptom onset`, breaks = seq(0,max_t,by = 1),include.lowest = FALSE, right= TRUE,labels = FALSE)) #Currently ignores symptoms at 0. 
