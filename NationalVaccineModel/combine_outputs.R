@@ -25,7 +25,8 @@ completed_df <- lapply(sim_numbers, function(i) {
   
   summary_df <- dplyr::filter(infected_individuals) %>% group_by(`Date symptoms`, `Age bracket`,`Vaccine at infection`, `Doses at infection`,Symptomatic) %>% summarise(incidence = n()) #Filter it to be only symptomatic infections.
   
-  completed_df <-summary_df %>% ungroup() %>% complete(expand(infected_individuals,`Date symptoms` = seq(0,max_t,by=1), `Age bracket`,`Vaccine at infection` = c("None","Pfizer","Moderna","Astrazeneca"), Symptomatic,`Doses at infection` = c(0,1,2)),fill = list(incidence = 0))%>% mutate(Sim = i)
+  completed_df <-summary_df %>% ungroup() %>%
+  complete(expand(infected_individuals,`Date symptoms` = seq(0,max_t,by=1), `Age bracket`,`Vaccine at infection` = c("None","Pfizer","Moderna","AstraZeneca"), Symptomatic,`Doses at infection` = c(0,1,2)),fill = list(incidence = 0))%>% mutate(Sim = i)
 }) %>% rbindlist()
 
 
