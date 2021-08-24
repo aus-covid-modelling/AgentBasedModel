@@ -109,13 +109,13 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     int threshold_70 = std::floor(0.7*elligible_pop_size);    bool catch_70 = false;    // 70% threshold and corresponding catch
     int threshold_80 = std::floor(0.8*elligible_pop_size);    bool catch_80 = false;    // 80% threshold and corresponding catch
     
-    int threshold_start = std::floor(0.48*elligible_pop_size); bool catch_start = false;
+    int threshold_start = std::floor(0.61*elligible_pop_size); bool catch_start = false;
     bool catch_stop_sim = false; 
     
     // Timestepping parameters
     double t = 0.0;
     double t_end = 390.0+180.0; // 6 months past the end of the simulation.
-    double dt = 7.0; // Probably doesnt need 16 per day but it runs so quick...
+    double dt = 1.0; // Probably doesnt need 16 per day but it runs so quick...
     
     // Vaccination event thresholds - Storage for the time when events occur.
     events thresholds;

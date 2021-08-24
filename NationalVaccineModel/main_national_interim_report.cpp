@@ -115,7 +115,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     // Timestepping parameters
     double t = 0.0;
     double t_end = 390.0+180.0; // 6 months past the end of the simulation.
-    double dt = 7.0; // Probably doesnt need 16 per day but it runs so quick...
+    double dt = 1.0; // Probably doesnt need 16 per day but it runs so quick...
     
     // Vaccination event thresholds - Storage for the time when events occur.
     events thresholds;

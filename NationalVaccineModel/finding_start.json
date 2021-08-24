@@ -1,9 +1,9 @@
 {
-    "folder_name": "TestSecond",
+    "folder_name": "Scen19_70_61_small",
     "output_directory": "./outputs/",
-    "num_sims": 1,
+    "num_sims": 50,
     "start_sims": 1,
-    "num_houses": 100000,
+    "num_houses": 500000,
     "average_house_size": 2.6,
     "Beta_H": 0.0,
     "vaccine_inputs": "none",
