@@ -46,7 +46,7 @@ public:
     double threshold_80_time = -10.0;
 };
 
-std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ){
+std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ,double initialise_exposure){
     // Inputs from QUANTIUM - pfizer doses per week etc are the proportion of doses per week in each age bracket.
     
     // Number of age brackets.
@@ -109,7 +109,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     int threshold_70 = std::floor(0.7*elligible_pop_size);    bool catch_70 = false;    // 70% threshold and corresponding catch
     int threshold_80 = std::floor(0.8*elligible_pop_size);    bool catch_80 = false;    // 80% threshold and corresponding catch
     
-    int threshold_start = std::floor(0.61*elligible_pop_size); bool catch_start = false;
+    int threshold_start = std::floor(initialise_exposure*elligible_pop_size); bool catch_start = false;
     bool catch_stop_sim = false; 
     
     // Timestepping parameters
@@ -173,7 +173,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
                 // Vaccinate individuals.
                 count_first_doses++;
                 residents[ind].vaccine_status.vaccinate_individual(astrazeneca[0], residents[ind].age_bracket, t);
-                second_doses.push_back(std::make_pair(t+49.0,ind));// 3 weeks later. In future this will be sampled depending upon delays.
+                second_doses.push_back(std::make_pair(t+84.0,ind));// 3 weeks later. In future this will be sampled depending upon delays.
             });
             vaccine_schedule.erase(vaccinated_start,vaccine_schedule.end()); // Remove them from vaccine schedule.
         
@@ -244,7 +244,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
                 
             
             // Check if we have reached the point to stop the simulation.
-            if(count_second_doses >= threshold_70 && !catch_70){
+            if(count_second_doses >= threshold_80 && !catch_80){
                 // You have surpassed 50% of population with second doses.
                 catch_70 = true;
                 catch_stop_sim = true;
@@ -255,7 +255,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
         }
 
     }
-    std::cout << second_doses.size() << std::endl;
+    
     // while(t < t_end){
     //     // Infection model!
     //     std::cout << "Current time = " << t << "\n";
@@ -286,6 +286,7 @@ int main(int argc, char *argv[]){
     std::string tti_filename;
     std::string SEED_INFECTION;
     std::string TTIQ;
+    double initialise_exposure;
     // Create folder
     std::string folder;
 
@@ -308,6 +309,7 @@ int main(int argc, char *argv[]){
     tti_filename = parameters_json["tti_distribution"];
     SEED_INFECTION = parameters_json["seed_infection"];
     TTIQ = parameters_json["TTIQ"];
+    initialise_exposure = parameters_json["initialise_exposures"];
 
     parameters_in.close(); // Close the file.
     
@@ -458,7 +460,7 @@ int main(int argc, char *argv[]){
         std::cout << "R0 = " << TP[TP_ref[i]] << "\n";
         std::cout << "beta C = " << beta_C << std::endl;
         auto begin = std::chrono::high_resolution_clock::now();
-        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION,TTIQ);
+        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION,TTIQ,initialise_exposure);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     

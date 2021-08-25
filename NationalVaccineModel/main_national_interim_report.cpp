@@ -169,7 +169,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
                 // Vaccinate individuals.
                 count_first_doses++;
                 residents[ind].vaccine_status.vaccinate_individual(astrazeneca[0], residents[ind].age_bracket, t);
-                second_doses.push_back(std::make_pair(t+49.0,ind));
+                second_doses.push_back(std::make_pair(t+84.0,ind));
             });
             vaccine_schedule.erase(vaccinated_start,vaccine_schedule.end()); // Remove them from vaccine schedule.
         
@@ -289,6 +289,23 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     
     while(t < t_end){
 
+        // Second doses - This can go here because the capacities are already done within the QUANTIUM model.
+            auto remove_second = std::remove_if(second_doses.begin(),second_doses.end(),[&](std::pair<double, int> & ref)->bool{
+                double t_second_dose = ref.first;
+                int ind = ref.second;
+                bool  get_vaccine = t >= t_second_dose;
+
+                if(get_vaccine){ // Make this so that each individual recieves a second dose of the same vaccine. (Noone waits for pfizer).
+                    vaccine_type vac_name = residents[ind].vaccine_status.get_type();
+                    vaccine_parameters second_dose_type = (vac_name==vaccine_type::pfizer)?pfizer[1]:(vac_name==vaccine_type::astrazeneca)?astrazeneca[1]:moderna[1];
+                    residents[ind].vaccine_status.vaccinate_individual(second_dose_type, residents[ind].age_bracket, t);
+                    count_second_doses++;
+                }
+                return get_vaccine;
+            });
+            second_doses.erase(remove_second,second_doses.end());
+
+
         // Infection model!
         std::cout << "Current time = " << t << "\n";
         // Reinitialise the new symptomatic infections.
@@ -297,7 +314,6 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
         t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
     
     }
-
     // Finished model.
     return residents;
 }

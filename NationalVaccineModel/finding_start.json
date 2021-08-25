@@ -1,5 +1,5 @@
 {
-    "folder_name": "Scen19_70_61_small",
+    "folder_name": "Scen19_84day_70_60",
     "output_directory": "./outputs/",
     "num_sims": 50,
     "start_sims": 1,
@@ -11,8 +11,8 @@
     "transmission_potential": "TP_posterior.txt",
     "vaccine_scenario": "scenario_19",
     "tti_distribution": "tti_distribution",
-    "seed_infection": "80",
-    "initialise_exposures": 0.7,
+    "seed_infection": "70",
+    "initialise_exposures": 0.6,
     "TTIQ": "partial",
     "population_pi": [0.06020956, 0.06341471, 0.06226446, 
                       0.05797783, 0.06569669, 0.07352615, 
