@@ -37,7 +37,7 @@ jobScript <- c(
   "#SBATCH --mem-per-cpu=20480",
   "#SBATCH --cpus-per-task=1",
   "#SBATCH --qos=shortq",
-  "#SBATCH --array=1-20",
+  paste0("#SBATCH --array=1-",max_iter),
   "",
   paste0("./Run ", folderPaths, "/", jobName, "_${SLURM_ARRAY_TASK_ID}.json")
 )
