@@ -16,7 +16,7 @@ for (i in 1:max_iter) {
   write(jsonlite::prettify(js), file=paste0(gsub(".json", "", fname), "_", i, ".json"))
 }
 
-print(max_iter, " copies of ", fname, " created.")
+print(paste0(max_iter, " copies of ", fname, " created."))
 print("Here is what one of them looks like: ")
 print(jsonlite::prettify(rjson::toJSON(parfile)))
 
@@ -45,7 +45,7 @@ jobScript <- c(
 writeLines(jobScript, con=jobFile)
 
 close(jobFile)
-print("Written job file to ", jobFname)
+print(paste0("Written job file to ", jobFname))
 
 
 combinerFname <- paste0(jobName, ".combine.job.script")
@@ -67,4 +67,4 @@ jobScript <- c(
 writeLines(jobScript, con=combinerFile)
 
 close(combinerFile)
-print("Written combiner file to ", combinerFname)
+print(paste0("Written combiner file to ", combinerFname))
