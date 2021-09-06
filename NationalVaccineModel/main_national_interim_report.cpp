@@ -211,7 +211,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
         std::cout << "E size " << E_ref.size() << " I size " << I_ref.size() << std::endl;
             
             // Call the disease model and increment time by dt days.
-            t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+                t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
             
             // Check if we want to seed infections. 
             if(count_second_doses >= threshold_start && !catch_start){

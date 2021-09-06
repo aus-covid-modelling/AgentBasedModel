@@ -46,7 +46,7 @@ public:
     double threshold_80_time = -10.0;
 };
 
-std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ,double initialise_exposure){
+std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ, double initialise_exposure){
     // Inputs from QUANTIUM - pfizer doses per week etc are the proportion of doses per week in each age bracket.
     
     // Number of age brackets.
@@ -66,6 +66,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     }
     
     disease_model covid(beta, beta_C, contact_matrix,tti_distribution[0],prob_tti); // Load the disease model, asymptomatic infections and
+    disease_model covid_med_phsm(0.0, beta_med, contact_matrix,tti_distribution[0], prob_tti); // Load the disease model, asymptomatic infections and)
     
     //  Parameters for households.
     int     num_houses              = parameters.num_houses;
@@ -108,9 +109,9 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     int threshold_60 = std::floor(0.6*elligible_pop_size);    bool catch_60 = false;    // 60% threshold and corresponding catch
     int threshold_70 = std::floor(0.7*elligible_pop_size);    bool catch_70 = false;    // 70% threshold and corresponding catch
     int threshold_80 = std::floor(0.8*elligible_pop_size);    bool catch_80 = false;    // 80% threshold and corresponding catch
-    
+
     int threshold_start = std::floor(initialise_exposure*elligible_pop_size); bool catch_start = false;
-    bool catch_stop_sim = false; 
+    
     
     // Timestepping parameters
     double t = 0.0;
@@ -141,10 +142,6 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
         std::vector<double> moderna_proportion  = moderna_doses_per_week[week_num];
         
         double t_old = t;
-
-        if(catch_stop_sim){std::cout << t << std::endl;break;} // Stop and break out
-
-
         while(t < t_old + 7.0){
         // This will occur for every day in the week!
         for(size_t age_bracket = 0; age_bracket < age_dependent_vaccination.size(); age_bracket++){
@@ -173,7 +170,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
                 // Vaccinate individuals.
                 count_first_doses++;
                 residents[ind].vaccine_status.vaccinate_individual(astrazeneca[0], residents[ind].age_bracket, t);
-                second_doses.push_back(std::make_pair(t+84.0,ind));// 3 weeks later. In future this will be sampled depending upon delays.
+                second_doses.push_back(std::make_pair(t+84.0,ind));
             });
             vaccine_schedule.erase(vaccinated_start,vaccine_schedule.end()); // Remove them from vaccine schedule.
         
@@ -209,62 +206,119 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             
         // Infection model!
         std::cout << "Current time = " << t << "\n";
+
         // Reinitialise the new symptomatic infections.
         std::vector<size_t> newly_symptomatic; newly_symptomatic.reserve(3000); // Reserve size so that reallocation isnt neccesary. Its a magic number.
         std::cout << "E size " << E_ref.size() << " I size " << I_ref.size() << std::endl;
-        // Call the disease model and increment time by dt days.
-        t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
-
-
             
+            // Call the disease model and increment time by dt days.
+            if(catch_70&&!catch_80){ // Run medium phsm for the thresholds between 70 and 80. 
+                t = covid_med_phsm.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+            }else{
+                t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+            }
+            
+            // Check if we want to seed infections. 
             if(count_second_doses >= threshold_start && !catch_start){
                 // You have surpassed 80% of population with second doses.
                 // thresholds.threshold_80_time = t;
-                std::cout << "start = " << t << "\n";
+                std::cout << "Start = " << t << "\n";
                 catch_start = true;
-                
-                // if(SEED_INFECTION.compare("80") == 0){
                     int cluster_ref = 0; // Track the exposure number, can show that one dominates.
                         while(cluster_ref < 30){
+
                             int exposed_resident = gen_res(generator); // Randomly sample from all the population.
+
                                 if(residents[exposed_resident].vaccine_status.get_type()==vaccine_type::none){
                                     if(residents[exposed_resident].covid.infection_status!='E'){
-                                    covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
-                                    residents[exposed_resident].covid.cluster_number = cluster_ref;
-                                    cluster_ref ++ ; // Increment the number of clusters.
-                                    E_ref.push_back(exposed_resident); // Start tracking them.
+                                        covid.seed_exposure(residents[exposed_resident],t); // Random resident has become infected
+                                        residents[exposed_resident].covid.cluster_number = cluster_ref;
+                                        cluster_ref ++ ; // Increment the number of clusters.
+                                        E_ref.push_back(exposed_resident); // Start tracking them.
+                                    }
+                                }
                         }
-                    }
-            }
                     
-            dt = pow(2.0,-2.0);
-            // t_end = t + 180.0; // Override t_end for 6 month horizon.
-            // }
-            }
-                
-            
-            // Check if we have reached the point to stop the simulation.
-            if(count_second_doses >= threshold_80 && !catch_80){
-                // You have surpassed 50% of population with second doses.
-                catch_80 = true;
-                catch_stop_sim = true;
-                break;
+                dt = pow(2.0,-2.0);
+
             }
 
+            // Check if any vaccinations thresholds have occured!
+            if(count_second_doses >= threshold_50 && !catch_50){
+                // You have surpassed 50% of population with second doses.
+                thresholds.threshold_50_time = t;
+                std::cout << "50 = " << t << "\n";
+                catch_50 = true;
+                
+                if(SEED_INFECTION.compare("50") == 0){  
+                    t_end = t + 360.0; // Override t_end for 6 month horizon.
+                }
+            }
+            
+            if(count_second_doses >= threshold_60 && !catch_60){
+                // You have surpassed 60% of population with second doses.
+                thresholds.threshold_60_time = t;
+                std::cout << "60 = " << t << "\n";
+                catch_60 = true;
+                
+                if(SEED_INFECTION.compare("60") == 0){
+                    t_end = t + 360.0; // Override t_end for 6 month horizon.
+                }
+            }
+            
+            if(count_second_doses >= threshold_70 && !catch_70){
+                // You have surpassed 70% of population with second doses.
+                thresholds.threshold_70_time = t;
+                std::cout << "70 = " << t << "\n";
+                catch_70 = true;
+                if(SEED_INFECTION.compare("70") == 0){
+                    t_end = t + 360.0; // Override t_end for 6 month horizon.
+                }
+            }
+            
+            if(count_second_doses >= threshold_80 && !catch_80){
+                // You have surpassed 80% of population with second doses.
+                thresholds.threshold_80_time = t;
+                std::cout << "80 = " << t << "\n";
+                catch_80 = true;
+                if(SEED_INFECTION.compare("80") == 0){
+                    t_end = t + 360.0; // Override t_end for 6 month horizon.
+                }
+            }
+            
+            
 
         }
 
     }
     
-    // while(t < t_end){
-    //     // Infection model!
-    //     std::cout << "Current time = " << t << "\n";
-    //     // Reinitialise the new symptomatic infections.
-    //     std::vector<size_t> newly_symptomatic; newly_symptomatic.reserve(3000); // Reserve size so that reallocation isnt neccesary. Its a magic number.
+    while(t < t_end){
+
+        // Second doses - This can go here because the capacities are already done within the QUANTIUM model.
+            auto remove_second = std::remove_if(second_doses.begin(),second_doses.end(),[&](std::pair<double, int> & ref)->bool{
+                double t_second_dose = ref.first;
+                int ind = ref.second;
+                bool  get_vaccine = t >= t_second_dose;
+
+                if(get_vaccine){ // Make this so that each individual recieves a second dose of the same vaccine. (Noone waits for pfizer).
+                    vaccine_type vac_name = residents[ind].vaccine_status.get_type();
+                    vaccine_parameters second_dose_type = (vac_name==vaccine_type::pfizer)?pfizer[1]:(vac_name==vaccine_type::astrazeneca)?astrazeneca[1]:moderna[1];
+                    residents[ind].vaccine_status.vaccinate_individual(second_dose_type, residents[ind].age_bracket, t);
+                    count_second_doses++;
+                }
+                return get_vaccine;
+            });
+            second_doses.erase(remove_second,second_doses.end());
+
+
+        // Infection model!
+        std::cout << "Current time = " << t << "\n";
+        // Reinitialise the new symptomatic infections.
+        std::vector<size_t> newly_symptomatic; newly_symptomatic.reserve(3000); // Reserve size so that reallocation isnt neccesary. Its a magic number.
         
-    //         t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+        t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
     
-    // }
+    }
     // Finished model.
     return residents;
 }
@@ -286,7 +340,8 @@ int main(int argc, char *argv[]){
     std::string tti_filename;
     std::string SEED_INFECTION;
     std::string TTIQ;
-    double initialise_exposure;
+    double initialise_exposure; 
+
     // Create folder
     std::string folder;
 
