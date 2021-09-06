@@ -12,6 +12,8 @@
 #include <algorithm>
 #include "../nlohmann/json.hpp"
 
+// IF YOU CHANGE THE EXPOSURE PERIOD OR THE SYMPTOMATIC PERIOD THEN R0 calculate must be updated !
+
 #ifdef _WIN32
     #include <direct.h>
 #endif
@@ -46,7 +48,7 @@ public:
     double threshold_80_time = -10.0;
 };
 
-std::vector<individual> run_model(double beta_C, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ, double initialise_exposure){
+std::vector<individual> run_model(double beta_C, double beta_med, parameter_struct parameters, std::vector<double> & age_brackets,std::vector<double> & vaccinated_proportion, std::vector<double> & population_pi, std::vector<std::vector<double>> &contact_matrix, vaccine_parameters & no_vaccine, std::vector<vaccine_parameters> & pfizer, std::vector<vaccine_parameters> & astrazeneca, std::vector<vaccine_parameters> & moderna, std::vector<std::vector<double>>& pfizer_doses_per_week, std::vector<std::vector<double>> & AZ_doses_per_week, std::vector<std::vector<double>> & moderna_doses_per_week,std::vector<std::vector<double>> & tti_distribution,std::string SEED_INFECTION,std::string TTIQ, double initialise_exposure){
     // Inputs from QUANTIUM - pfizer doses per week etc are the proportion of doses per week in each age bracket.
     
     // Number of age brackets.
@@ -66,7 +68,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
     }
     
     disease_model covid(beta, beta_C, contact_matrix,tti_distribution[0],prob_tti); // Load the disease model, asymptomatic infections and
-    disease_model covid_med_phsm(0.0, beta_med, contact_matrix,tti_distribution[0], prob_tti); // Load the disease model, asymptomatic infections and)
+    disease_model covid_med_phsm(beta, beta_med, contact_matrix,tti_distribution[0], prob_tti); // Load the disease model, asymptomatic infections and)
     
     //  Parameters for households.
     int     num_houses              = parameters.num_houses;
@@ -214,6 +216,7 @@ std::vector<individual> run_model(double beta_C, parameter_struct parameters, st
             // Call the disease model and increment time by dt days.
             if(catch_70&&!catch_80){ // Run medium phsm for the thresholds between 70 and 80. 
                 t = covid_med_phsm.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
+                // std::cout << "MED \n";
             }else{
                 t = covid.covid_ascm(residents,houses,age_matrix,t,t+dt,dt,E_ref,I_ref,newly_symptomatic);
             }
@@ -336,6 +339,7 @@ int main(int argc, char *argv[]){
     // Read in the parameter files.
     std::ifstream parameters_in(filename);
     std::string tp_filename;
+    double TP_med;
     std::string scenario_ref;
     std::string tti_filename;
     std::string SEED_INFECTION;
@@ -360,6 +364,7 @@ int main(int argc, char *argv[]){
 
     folder = parameters_json["folder_name"];
     tp_filename = parameters_json["transmission_potential"];
+    TP_med = parameters_json["transmission_potential_med"];
     scenario_ref = parameters_json["vaccine_scenario"];
     tti_filename = parameters_json["tti_distribution"];
     SEED_INFECTION = parameters_json["seed_infection"];
@@ -511,11 +516,15 @@ int main(int argc, char *argv[]){
     for(int i = 0; i < num_sims; i++){
         // Calculate beta_C for the simulation.
         double beta_C = TP[TP_ref[i]]/((5.0)*sum_expression);
+        double beta_med = TP_med/((5.0)*sum_expression);
+
         std::cout << "Sim Number = " << i+1 << "\n";
         std::cout << "R0 = " << TP[TP_ref[i]] << "\n";
+        std::cout << "R0 med = " << TP_med << "\n";
         std::cout << "beta C = " << beta_C << std::endl;
+        std::cout << "beta med = " << beta_med << std::endl;
         auto begin = std::chrono::high_resolution_clock::now();
-        std::vector<individual> residents = run_model(beta_C, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION,TTIQ,initialise_exposure);
+        std::vector<individual> residents = run_model(beta_C, beta_med, parameters, age_brackets, vaccinated_proportion, population_pi, contact_matrix, no_vaccine, pfizer, astrazeneca, moderna, pfizer_doses_per_week, AZ_doses_per_week, moderna_doses_per_week,tti_distribution,SEED_INFECTION,TTIQ,initialise_exposure);
         auto end = std::chrono::high_resolution_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     
