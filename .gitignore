@@ -1,0 +1,11 @@
+.DS_Store
+
+.vscode/
+
+*.o
+
+NationalVaccineModel/Run.exe
+
+NationalVaccineModel/dev-parameters.txt
+
+debug.log

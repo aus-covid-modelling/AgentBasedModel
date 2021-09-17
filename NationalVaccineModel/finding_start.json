@@ -1,0 +1,22 @@
+{
+    "folder_name": "Scen19Med_Partial_80_345",
+    "output_directory": "./outputs/",
+    "num_sims": 50,
+    "start_sims": 1,
+    "num_houses": 1000000,
+    "average_house_size": 2.6,
+    "Beta_H": 0.0,
+    "vaccine_inputs": "none",
+    "contact_matrix": "none",
+    "transmission_potential": "TP_posterior_med.txt",
+    "vaccine_scenario": "scenario_19",
+    "tti_distribution": "tti_distribution",
+    "seed_infection": "80",
+    "initialise_exposures": 0.345,
+    "TTIQ": "partial",
+    "population_pi": [0.06020956, 0.06341471, 0.06226446, 
+                      0.05797783, 0.06569669, 0.07352615, 
+                      0.07472913, 0.07165560, 0.06332489, 
+                      0.06493163, 0.06128505, 0.06041115, 
+                      0.05616401, 0.04919153, 0.04334894, 0.07186866]
+}
